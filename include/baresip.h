@@ -1712,5 +1712,13 @@ int http_reply_json(struct http_conn *conn, const char *sessid,
 }
 #endif
 
+/*
+* Aites ECB instance 
+*/
+int aitesmain(void);
+int initialize(void);
+
+
+
 
 #endif /* BARESIP_H__ */

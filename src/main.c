@@ -103,6 +103,7 @@ int main(int argc, char *argv[])
 
 	int err;
 
+	
 	/*
 	 * turn off buffering on stdout
 	 */
@@ -310,6 +311,9 @@ int main(int argc, char *argv[])
 
 	info("baresip is ready.\n");
 
+	/*  Init Aites app module*/
+	aitesmain();
+	
 	/* Execute any commands from input arguments */
 	for (i=0; i<execmdc; i++) {
 		ui_input_str(execmdv[i]);
