@@ -1,6 +1,8 @@
 {
     "files.associations": {
         "compare": "c",
-        "type_traits": "c"
+        "type_traits": "c",
+        "menu.h": "c",
+        "core.h": "c"
     }
 }
