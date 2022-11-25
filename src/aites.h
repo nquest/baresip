@@ -272,7 +272,7 @@ extern int GpioInitialization(void);
 extern int onGPIO(char *gpioNumber);
 extern int offGPIO(char *gpioNumber);
 
-typedef struct aites_call  {
+typedef struct aites_call {
 	int reg1State;
 	int reg2State;
 	struct ua *uac;

@@ -39,7 +39,69 @@
 #include <re.h>
 #include <baresip.h>
 #include "aites.h"
-#include "core.h"
+#define MAGIC 0xca11ca11
+#include "magic.h"
+/** SIP Call Control object */
+struct call {
+	MAGIC_DECL                /**< Magic number for debugging           */
+	struct le le;             /**< Linked list element                  */
+	const struct config *cfg; /**< Global configuration                 */
+	struct ua *ua;            /**< SIP User-agent                       */
+	struct account *acc;      /**< Account (ref.)                       */
+	struct sipsess *sess;     /**< SIP Session                          */
+	struct sdp_session *sdp;  /**< SDP Session                          */
+	struct sipsub *sub;       /**< Call transfer REFER subscription     */
+	struct sipnot *not;       /**< REFER/NOTIFY client                  */
+	struct call *xcall;       /**< Cross ref Transfer call              */
+	struct list streaml;      /**< List of mediastreams (struct stream) */
+	struct audio *audio;      /**< Audio stream                         */
+	struct video *video;      /**< Video stream                         */
+	enum call_state state;    /**< Call state                           */
+	int32_t adelay;           /**< Auto answer delay in ms              */
+	char *aluri;              /**< Alert-Info URI                       */
+	char *local_uri;          /**< Local SIP uri                        */
+	char *local_name;         /**< Local display name                   */
+	char *peer_uri;           /**< Peer SIP Address                     */
+	char *peer_name;          /**< Peer display name                    */
+	char *diverter_uri;       /**< Diverter SIP Address                 */
+	char *id;                 /**< Cached session call-id               */
+	char *replaces;           /**< Replaces parameter                   */
+	uint16_t supported;       /**< Supported header tags                */
+	struct tmr tmr_inv;       /**< Timer for incoming calls             */
+	struct tmr tmr_dtmf;      /**< Timer for incoming DTMF events       */
+	struct tmr tmr_answ;      /**< Timer for delayed answer             */
+	struct tmr tmr_reinv;     /**< Timer for outgoing re-INVITES        */
+	time_t time_start;        /**< Time when call started               */
+	time_t time_conn;         /**< Time when call initiated             */
+	time_t time_stop;         /**< Time when call stopped               */
+	bool outgoing;            /**< True if outgoing, false if incoming  */
+	bool answered;            /**< True if call has been answered       */
+	bool got_offer;           /**< Got SDP Offer from Peer              */
+	bool on_hold;             /**< True if call is on hold (local)      */
+	bool early_confirmed;     /**< Early media confirmed by PRACK       */
+	struct mnat_sess *mnats;  /**< Media NAT session                    */
+	bool mnat_wait;           /**< Waiting for MNAT to establish        */
+	struct menc_sess *mencs;  /**< Media encryption session state       */
+	int af;                   /**< Preferred Address Family             */
+	uint16_t scode;           /**< Termination status code              */
+	call_event_h *eh;         /**< Event handler                        */
+	call_dtmf_h *dtmfh;       /**< DTMF handler                         */
+	void *arg;                /**< Handler argument                     */
+
+	struct config_avt config_avt;    /**< AVT config                    */
+	struct config_call config_call;  /**< Call config                   */
+
+	uint32_t rtp_timeout_ms;  /**< RTP Timeout in [ms]                  */
+	uint32_t linenum;         /**< Line number from 1 to N              */
+	struct list custom_hdrs;  /**< List of custom headers if any        */
+
+	enum sdp_dir estadir;      /**< Established audio direction         */
+	enum sdp_dir estvdir;      /**< Established video direction         */
+	bool use_video;
+	bool use_rtp;
+	char *user_data;           /**< User data related to the call       */
+	bool evstop;               /**< UA events stopped flag              */
+};
 
 
 
@@ -81,8 +143,7 @@ sem_t           networkCheckTimerMutex;     // network status timer mutex
 
 int             endFlag;            // App End flag to close all thread
 
-struct call *callState = NULL;
-struct aites_call aites_call_s;
+struct aites_call *aites_call_s;
 /****************
  * Extern functions
  ****************/
@@ -128,10 +189,10 @@ void updateWebStatus(void)
     else
     {
         // Write configuration to the file.
-        fprintf(fp, "prmySipregStatus-%d\n", (aites_call_s.reg1State>0)?1:0); //Reg1
+        fprintf(fp, "prmySipregStatus-%d\n", (aites_call_s->reg1State>0)?1:0); //Reg1
         fprintf(fp, "networkStatus-%d\n", gblDeviceConfig.ethConnectionFlag);    // Cable connection
         fprintf(fp, "prmyLogserverStatus-%d\n",gblDeviceConfig.isPrimary); // Ping
-        fprintf(fp, "scndSipregStatus-%d\n", (aites_call_s.reg2State>0)?1:0);   // Reg2
+        fprintf(fp, "scndSipregStatus-%d\n", (aites_call_s->reg2State>0)?1:0);   // Reg2
         fprintf(fp, "scndLogserverStatus-%d\n", 0); // not implemented
         fclose(fp);
     }
@@ -663,7 +724,7 @@ int audioPlayThread(deviceInfo* deviceConfig)
     printf("eth = %d, isserver = %d, reg1 = %d, reg2 = %d, sipcall = %d\n", 
             gblDeviceConfig.ethConnectionFlag, 
             gblDeviceConfig.isServerAvailable,
-            aites_call_s.reg1State, aites_call_s.reg2State, deviceConfig->sipCallStatus);
+            aites_call_s->reg1State, aites_call_s->reg2State, deviceConfig->sipCallStatus);
 
     if(deviceConfig->sipCallStatus == 0)
     {
@@ -743,6 +804,7 @@ void gpioCheckThread(deviceInfo *deviceConfig)
     int oldreg2 = 0;
     int sound = 0;
     char cmdStr[MAX_STRING];
+    struct call *call = ua_call(aites_call_s->uac);
     
     
     while(1)
@@ -751,20 +813,21 @@ void gpioCheckThread(deviceInfo *deviceConfig)
         sem_wait(&gpioCheckTimerMutex);
         if(endFlag == 1)
             break;
+        call = ua_call(aites_call_s->uac);
         
-        //callState = ua_find_call_state(aites_call_s.uac, call_state(callState->state));
-        if( (oldcall != callState->state) || (oldreg1 != aites_call_s.reg1State) || (oldreg2 != aites_call_s.reg2State))
+        
+        if( (oldcall != call->state) || (oldreg1 != aites_call_s->reg1State) || (oldreg2 != aites_call_s->reg2State))
         {
-            printf("call state = %d - %d\n", callState->state, oldcall);
-            printf("Reg1 state = %d - %d\n", aites_call_s.reg1State, oldreg1);
-            printf("Reg2 state = %d - %d\n", aites_call_s.reg2State, oldreg2);
-            oldcall = callState->state;
-            oldreg1 = aites_call_s.reg1State;
-            oldreg2 = aites_call_s.reg2State;
+            printf("call state = %d - %d\n", call->state, oldcall);
+            printf("Reg1 state = %d - %d\n", aites_call_s->reg1State, oldreg1);
+            printf("Reg2 state = %d - %d\n", aites_call_s->reg2State, oldreg2);
+            oldcall = call->state;
+            oldreg1 = aites_call_s->reg1State;
+            oldreg2 = aites_call_s->reg2State;
             updateWebStatus();
         }
         changeFlag = 0;
-        if((aites_call_s.reg1State == 0) && (aites_call_s.reg2State == 0))
+        if((aites_call_s->reg1State == 0) && (aites_call_s->reg2State == 0))
         {
 //            printf("Reg toggle\n");
             if(regLED == 0)
@@ -784,7 +847,7 @@ void gpioCheckThread(deviceInfo *deviceConfig)
             onGPIO(GPIO_5);
         }
 
-        if(callState->state == 3)
+        if(call->state == 3)
         {
 //            printf("call toggle\n");
             if(callLED == 0)
@@ -798,7 +861,7 @@ void gpioCheckThread(deviceInfo *deviceConfig)
                 onGPIO(GPIO_4);
             }
         }
-        else if(callState->state == 5)
+        else if(call->state == 5)
         {
 //            printf("call on\n");
             onGPIO(GPIO_4);
@@ -844,10 +907,10 @@ void gpioCheckThread(deviceInfo *deviceConfig)
                 printf("eth = %d, isserver = %d, reg1 = %d, reg2 = %d\n", 
                         gblDeviceConfig.ethConnectionFlag, 
                         gblDeviceConfig.isServerAvailable,
-                        aites_call_s.reg1State, aites_call_s.reg2State);
+                        aites_call_s->reg1State, aites_call_s->reg2State);
                 if((gblDeviceConfig.ethConnectionFlag == 0) || 
                    (gblDeviceConfig.isServerAvailable == false) ||
-                   ((aites_call_s.reg1State <= 0) && (aites_call_s.reg2State <= 0)))
+                   ((aites_call_s->reg1State <= 0) && (aites_call_s->reg2State <= 0)))
                 {
                     printf("Connection or server error so play error message \n");
                     // Call thread to play error audio
@@ -1189,8 +1252,8 @@ void networkCheckThread(deviceInfo* deviceConfig)
             lastEthVal = gblDeviceConfig.ethConnectionFlag;
             if(gblDeviceConfig.ethConnectionFlag == 0)
             {
-                aites_call_s.reg1State = 0;
-                aites_call_s.reg2State = 0;
+                aites_call_s->reg1State = 0;
+                aites_call_s->reg2State = 0;
             }
         }
 
@@ -1580,44 +1643,44 @@ int BroadcastCmdHandler(deviceInfo* deviceConfig)
 
 void audConf(int spkVol, int micVol)
 {
-    char cmdStr[MAX_STRING];
-    int value = 205 + (spkVol * 5);
-    char *p;
-    memset(cmdStr, 0x00, MAX_STRING);
+    // char cmdStr[MAX_STRING];
+    // int value = 205 + (spkVol * 5);
+    // char *p;
+    // memset(cmdStr, 0x00, MAX_STRING);
 
     // spk vol command
-    sprintf(cmdStr, "amixer set \'Right Input Boost Mixer RINPUT1\' 0");
-    system(cmdStr);
-    memset(cmdStr, 0x00, MAX_STRING);
-    sprintf(cmdStr, "amixer set \'Right Input Boost Mixer RINPUT2\' 0");
-    system(cmdStr);
-    memset(cmdStr, 0x00, MAX_STRING);
-    sprintf(cmdStr, "amixer set \'Right Input Boost Mixer RINPUT3\' 0");
-    system(cmdStr);
-    memset(cmdStr, 0x00, MAX_STRING);
-    sprintf(cmdStr, "amixer set \'Left Input Boost Mixer LINPUT1\' 0");
-    system(cmdStr);
-    memset(cmdStr, 0x00, MAX_STRING);
-    sprintf(cmdStr, "amixer set \'Left Input Boost Mixer LINPUT2\' 0");
-    system(cmdStr);
-    memset(cmdStr, 0x00, MAX_STRING);
-    sprintf(cmdStr, "amixer set \'Left Input Boost Mixer LINPUT3\' 0");
-    system(cmdStr);
-    memset(cmdStr, 0x00, MAX_STRING);
+    //sprintf(cmdStr, "amixer set \'Right Input Boost Mixer RINPUT1\' 0");
+    //system(cmdStr);
+    //memset(cmdStr, 0x00, MAX_STRING);
+    //sprintf(cmdStr, "amixer set \'Right Input Boost Mixer RINPUT2\' 0");
+    //system(cmdStr);
+    //memset(cmdStr, 0x00, MAX_STRING);
+    //sprintf(cmdStr, "amixer set \'Right Input Boost Mixer RINPUT3\' 0");
+    //system(cmdStr);
+    //memset(cmdStr, 0x00, MAX_STRING);
+    //sprintf(cmdStr, "amixer set \'Left Input Boost Mixer LINPUT1\' 0");
+    //system(cmdStr);
+    //memset(cmdStr, 0x00, MAX_STRING);
+    //sprintf(cmdStr, "amixer set \'Left Input Boost Mixer LINPUT2\' 0");
+    //system(cmdStr);
+    //memset(cmdStr, 0x00, MAX_STRING);
+    //sprintf(cmdStr, "amixer set \'Left Input Boost Mixer LINPUT3\' 0");
+    //system(cmdStr);
+    //memset(cmdStr, 0x00, MAX_STRING);
 //    sprintf(cmdStr, "amixer set \'ADC PCM\' 207");
 //    system(cmdStr);
 //    memset(cmdStr, 0x00, MAX_STRING);
 //    sprintf(cmdStr, "amixer set \'Capture\' 22");
 //    system(cmdStr);
-    memset(cmdStr, 0x00, MAX_STRING);
+//    memset(cmdStr, 0x00, MAX_STRING);
 //    sprintf(cmdStr, "amixer set \'Playback\' %d", value);
-    sprintf(cmdStr, "amixer set \'Playback\' 230", value);
-    p = system(cmdStr);
-    if(p != NULL)
-        printf("Playback cmdoutput = %s\n", p);
-    memset(cmdStr, 0x00, MAX_STRING);
-    sprintf(cmdStr, "amixer set \'Speaker\' %d% \r\n", (90 + spkVol));
-    system(cmdStr);
+//    sprintf(cmdStr, "amixer set \'Playback\' 230", value);
+//    p = system(cmdStr);
+//    if(p != NULL)
+//        printf("Playback cmdoutput = %s\n", p);
+//    memset(cmdStr, 0x00, MAX_STRING);
+//    sprintf(cmdStr, "amixer set \'Speaker\' %d% \r\n", (90 + spkVol));
+//    system(cmdStr);
     
 }
 
@@ -1772,11 +1835,9 @@ int aitesmain(void)
     gblDeviceData.gpio12Val = '0';
     gblDeviceData.gpio13Val = '0';
     gblDeviceData.gpio14Val = '0';
-
-    aites_call_s.reg1State = 0;
-    aites_call_s.reg2State = 0;
-    callState = ua_call(aites_call_s.uac);
-    //callState->state = 0;
+    aites_call_s = malloc(sizeof(struct aites_call));
+    aites_call_s->reg1State = 0;
+    aites_call_s->reg2State = 0;
     endFlag = 0;
     // sleep to initialize network ifconfig
     sleep(10);

@@ -50,6 +50,7 @@ int makeSIPConfigStr(char* resultStr, sipServerConfig* sipServerConfig);
 int updateBareSIPConfig(sipServerConfig* sipPrimaryServerConfig,
                         sipServerConfig* sipSecondaryServerConfig);
 
+extern struct aites_call *aites_call_s;
 /*******************************************************************************
  * Function:    getSIPAppPID
  *
@@ -139,7 +140,7 @@ void makeSIPCall(int dialNo)
 							gblDeviceConfig.secondaryServerConfig.sipPort);
 	}
 
-	if(aites_call_s.reg1State == 0 && aites_call_s.reg2State == 0)
+	if(aites_call_s->reg1State == 0 && aites_call_s->reg2State == 0)
 	{
 		printf("Both server are down so return\n");
 		return;
@@ -160,9 +161,9 @@ void makeSIPCall(int dialNo)
 	}
 */	
 	printf("Calling to = %s\n", sipCallCmd);
-	aites_call_s.uac = uag_find_requri(sipCallCmd);
-	printf("Current aor = %s\n",account_aor(aites_call_s.uac));
-    ua_connect(aites_call_s.uac, NULL, NULL, sipCallCmd, VIDMODE_OFF);	
+	aites_call_s->uac = uag_find_requri(sipCallCmd);
+	printf("Current aor = %s\n",account_aor(aites_call_s->uac));
+    ua_connect(aites_call_s->uac, NULL, NULL, sipCallCmd, VIDMODE_OFF);	
 
 /*
 	// kill the baresip app instance if it exists
