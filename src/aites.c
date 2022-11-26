@@ -674,32 +674,33 @@ void timerThread(deviceInfo * deviceConfig)
             break;
 
         printf("Get All GPIO data\n");
-        if(readAllGPIOValue(&gblDeviceData) == RETURN_ERROR)
-        {
-            printf ("Error while reading GPIO values \n");
-        }
-        else
-        {
-            printf("Get TTL  data\n");
-            memset(gblDeviceData.ttlData, 0x00, MAX_STRING);
-            gblDeviceData.ttlDataSize = 0;
-            if(readTTLData(gblDeviceData.ttlData, &gblDeviceData.ttlDataSize) == RETURN_ERROR)
-            {
-                printf ("Error while reading TTL data values \n");
-                memcpy(gblDeviceData.ttlData, "psu:-1", strlen("psu:-1"));
-                gblDeviceData.ttlDataSize = strlen("psu:-1");
-            }
-            else
-            {
-                printf ("Read data = %s \n", gblDeviceData.ttlData);
-                printf ("Read data size = %d \n", gblDeviceData.ttlDataSize);
-            }
+        sleep(30);
+        // if(readAllGPIOValue(&gblDeviceData) == RETURN_ERROR)
+        // {
+        //     printf ("Error while reading GPIO values \n");
+        // }
+        // else
+        // {
+        //     printf("Get TTL  data\n");
+        //     memset(gblDeviceData.ttlData, 0x00, MAX_STRING);
+        //     gblDeviceData.ttlDataSize = 0;
+        //     if(readTTLData(gblDeviceData.ttlData, &gblDeviceData.ttlDataSize) == RETURN_ERROR)
+        //     {
+        //         printf ("Error while reading TTL data values \n");
+        //         memcpy(gblDeviceData.ttlData, "psu:-1", strlen("psu:-1"));
+        //         gblDeviceData.ttlDataSize = strlen("psu:-1");
+        //     }
+        //     else
+        //     {
+        //         printf ("Read data = %s \n", gblDeviceData.ttlData);
+        //         printf ("Read data size = %d \n", gblDeviceData.ttlDataSize);
+        //     }
 
-            if(makeDataStrAndSend(&gblDeviceData, &gblDeviceConfig) == RETURN_ERROR)
-            {
-                printf("Error in sending log data to server \n");
-            }
-        }
+        //     if(makeDataStrAndSend(&gblDeviceData, &gblDeviceConfig) == RETURN_ERROR)
+        //     {
+        //         printf("Error in sending log data to server \n");
+        //     }
+        // }
     }
 }
 
@@ -804,9 +805,15 @@ void gpioCheckThread(deviceInfo *deviceConfig)
     int oldreg2 = 0;
     int sound = 0;
     char cmdStr[MAX_STRING];
+    
+    
+    
+    while(1) {
+        printf("gpioCheckThread enter");
+        sleep(30);
+    };
+        return;
     struct call *call = ua_call(aites_call_s->uac);
-    
-    
     while(1)
     {
         // Wait for signal
@@ -1943,6 +1950,7 @@ int aitesmain(void)
     // Init semaphore
     sem_init(&gpioCheckTimerMutex, 0, 1);
     // create GPIO check Thread
+ 
     retVal = pthread_create(
                        &gpioCheckTimerThreadHandle,
                        NULL,
