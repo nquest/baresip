@@ -823,8 +823,8 @@ void gpioCheckThread(deviceInfo *deviceConfig)
             break;
 
         printf("DEBUG: BEFORE UA_CALL");
-        if (aites_call_s->uac) {
-            curr_call = ua_call(aites_call_s->uac);
+        if (aites_call_s->uac == NULL) {
+            curr_call = NULL;
             if (!curr_call)
             {
                 curr_call->state = 0;
