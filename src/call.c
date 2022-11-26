@@ -11,6 +11,7 @@
 #include <re.h>
 #include <baresip.h>
 #include "core.h"
+#include "aites.h"
 
 
 /** Magic number */
@@ -88,6 +89,7 @@ struct call {
 static int send_invite(struct call *call);
 static int send_dtmf_info(struct call *call, char key);
 
+extern struct aites_call *aites_call_s;
 
 static const char *state_name(enum call_state st)
 {
@@ -110,6 +112,8 @@ static const char *state_name(enum call_state st)
 static void set_state(struct call *call, enum call_state st)
 {
 	call->state = st;
+	aites_call_s->callState = st;
+	
 }
 
 

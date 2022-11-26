@@ -276,6 +276,7 @@ typedef struct aites_call {
 	int reg1State;
 	int reg2State;
 	struct ua *uac;
+    int callState;
 };
 
 
