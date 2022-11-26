@@ -6,7 +6,9 @@
 #include <re.h>
 #include <baresip.h>
 #include "core.h"
-
+#include "aites.h"
+extern deviceInfo      gblDeviceConfig;	// Device Structure
+extern struct aites_call *aites_call_s;
 
 /** Register client */
 struct reg {
@@ -21,6 +23,8 @@ struct reg {
 	char *srv;                   /**< SIP Server id                      */
 	int af;                      /**< Cached address family for SIP conn */
 };
+
+                        // Device Structure
 
 
 static void destructor(void *arg)
@@ -106,6 +110,22 @@ static void register_handler(int err, const struct sip_msg *msg, void *arg)
 		UA_EVENT_REGISTER_OK : UA_EVENT_FALLBACK_OK;
 	enum ua_event evfail = reg->regint ?
 		UA_EVENT_REGISTER_FAIL : UA_EVENT_FALLBACK_FAIL;
+	char* temp = ua_aor(reg->ua);
+	char prmsipid[256];
+	char sndsipid[256];
+	memset(prmsipid, 0x00, 256);
+	sprintf(prmsipid, "sip:%s@%s:%s",
+											gblDeviceConfig.primaryServerConfig.sipServerUserID,
+											gblDeviceConfig.primaryServerConfig.sipServerIP,
+											gblDeviceConfig.primaryServerConfig.sipPort);
+	memset(sndsipid, 0x00, 256);
+	sprintf(sndsipid, "sip:%s@%s:%s",
+											gblDeviceConfig.secondaryServerConfig.sipServerUserID,
+											gblDeviceConfig.secondaryServerConfig.sipServerIP,
+											gblDeviceConfig.secondaryServerConfig.sipPort);
+	printf("temp----------------%s\n", temp);
+	printf("prmsipid----------------%s\n", prmsipid);
+	printf("sndsipid----------------%s\n", sndsipid);
 
 	if (err) {
 		if (reg->regint)
@@ -115,6 +135,19 @@ static void register_handler(int err, const struct sip_msg *msg, void *arg)
 		reg->scode = 999;
 
 		ua_event(reg->ua, evfail, NULL, "%m", err);
+		           if(!strcmp(temp, prmsipid))
+                {
+                        if(aites_call_s->reg1State)
+                                aites_call_s->reg1State--;
+                        printf("reg1State----------------%d\n", aites_call_s->reg1State);
+                }
+                else if(!strcmp(temp, sndsipid))
+                {
+                        if(aites_call_s->reg2State)
+                                aites_call_s->reg2State--;
+                        printf("reg2State----------------%d\n", aites_call_s->reg2State);
+                }
+
 		return;
 	}
 
