@@ -808,11 +808,11 @@ void gpioCheckThread(deviceInfo *deviceConfig)
     
     
     
-    while(1) {
-        printf("gpioCheckThread enter");
-        sleep(30);
-    };
-        return;
+    // while(1) {
+    //     printf("gpioCheckThread enter");
+    //     sleep(30);
+    // };
+    //     return;
     
     
     while(1)
