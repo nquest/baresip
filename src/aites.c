@@ -813,14 +813,22 @@ void gpioCheckThread(deviceInfo *deviceConfig)
         sleep(30);
     };
         return;
-    struct call *call = ua_call(aites_call_s->uac);
+    
+    
     while(1)
     {
         // Wait for signal
         sem_wait(&gpioCheckTimerMutex);
         if(endFlag == 1)
             break;
-        call = ua_call(aites_call_s->uac);
+
+        printf("DEBUG: BEFORE UA_CALL");
+        struct call *call = ua_call(aites_call_s->uac);
+        if (!call)
+        {
+            call->state = 0;
+        }
+        printf("DEBUG: After UA_CALL");
         
         
         if( (oldcall != call->state) || (oldreg1 != aites_call_s->reg1State) || (oldreg2 != aites_call_s->reg2State))
