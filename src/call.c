@@ -395,6 +395,7 @@ static void print_summary(const struct call *call)
 
 	info("%s: Call with %s terminated (duration: %H)\n",
 	     call->local_uri, call->peer_uri, fmt_human_time, &dur);
+		 aites_call_s->callState = CALL_STATE_TERMINATED;
 }
 
 
