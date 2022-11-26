@@ -110,7 +110,7 @@ static void register_handler(int err, const struct sip_msg *msg, void *arg)
 		UA_EVENT_REGISTER_OK : UA_EVENT_FALLBACK_OK;
 	enum ua_event evfail = reg->regint ?
 		UA_EVENT_REGISTER_FAIL : UA_EVENT_FALLBACK_FAIL;
-	char* temp = ua_aor(reg->ua);
+	char* temp = account_aor(acc);
 	char prmsipid[256];
 	char sndsipid[256];
 	memset(prmsipid, 0x00, 256);
@@ -171,6 +171,17 @@ static void register_handler(int err, const struct sip_msg *msg, void *arg)
 				  af_name(reg->af), msg->scode, &msg->reason,
 				  reg->srv, n_bindings,
 				  1==n_bindings?"":"s");
+				   if(!strcmp(temp, prmsipid))
+                        {
+                                aites_call_s->reg1State++;
+                                printf("reg1State----------------%d\n", aites_call_s->reg1State);
+                        }
+                        else if(!strcmp(temp, sndsipid))
+                        {
+                                aites_call_s->reg2State++;
+                                printf("reg2State----------------%d\n", aites_call_s->reg2State);
+                        }
+
 		}
 
 		reg->scode = msg->scode;
