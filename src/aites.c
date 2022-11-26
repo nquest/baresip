@@ -805,7 +805,7 @@ void gpioCheckThread(deviceInfo *deviceConfig)
     int oldreg2 = 0;
     int sound = 0;
     char cmdStr[MAX_STRING];
-    
+    struct call *curr_call = malloc(sizeof(struct call));
     
     
     // while(1) {
@@ -823,20 +823,20 @@ void gpioCheckThread(deviceInfo *deviceConfig)
             break;
 
         printf("DEBUG: BEFORE UA_CALL");
-        struct call *call = ua_call(aites_call_s->uac);
-        if (!call)
+        *curr_call = ua_call(aites_call_s->uac);
+        if (!curr_call)
         {
-            call->state = 0;
+            curr_call->state = 0;
         }
         printf("DEBUG: After UA_CALL");
         
         
-        if( (oldcall != call->state) || (oldreg1 != aites_call_s->reg1State) || (oldreg2 != aites_call_s->reg2State))
+        if( (oldcall != curr_call->state) || (oldreg1 != aites_call_s->reg1State) || (oldreg2 != aites_call_s->reg2State))
         {
-            printf("call state = %d - %d\n", call->state, oldcall);
+            printf("call state = %d - %d\n", curr_call->state, oldcall);
             printf("Reg1 state = %d - %d\n", aites_call_s->reg1State, oldreg1);
             printf("Reg2 state = %d - %d\n", aites_call_s->reg2State, oldreg2);
-            oldcall = call->state;
+            oldcall = curr_call->state;
             oldreg1 = aites_call_s->reg1State;
             oldreg2 = aites_call_s->reg2State;
             updateWebStatus();
@@ -862,7 +862,7 @@ void gpioCheckThread(deviceInfo *deviceConfig)
             onGPIO(GPIO_5);
         }
 
-        if(call->state == 3)
+        if(curr_call->state == 3)
         {
 //            printf("call toggle\n");
             if(callLED == 0)
@@ -876,7 +876,7 @@ void gpioCheckThread(deviceInfo *deviceConfig)
                 onGPIO(GPIO_4);
             }
         }
-        else if(call->state == 5)
+        else if(curr_call->state == 5)
         {
 //            printf("call on\n");
             onGPIO(GPIO_4);
