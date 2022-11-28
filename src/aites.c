@@ -825,13 +825,13 @@ void gpioCheckThread(deviceInfo *deviceConfig)
         //printf("DEBUG: BEFORE UA_CALL\n");
 
         if (aites_call_s->uac == NULL) {
-            printf("DEBUG: UAC is null\n");  // TODO: check UA for null before 
+            //printf("DEBUG: UAC is null\n");  // TODO: check UA for null before 
             curr_call->state = 0; // aites_call_s->callState;
             //break;
-            printf("DEBUG: PTR to curr_call is %p", curr_call);
+            //printf("DEBUG: PTR to curr_call is %p", curr_call);
             if (curr_call == NULL)
             {
-                printf("Curr_call is NULL\n");
+                //printf("Curr_call is NULL\n");
                 //curr_call->state = 0;
                 //break;
                 
@@ -839,7 +839,7 @@ void gpioCheckThread(deviceInfo *deviceConfig)
         } else {
             curr_call->state = aites_call_s->callState;
         }
-        printf("DEBUG: After UA_CALL\n");
+        //printf("DEBUG: After UA_CALL\n");
         
         
         if( (oldcall != curr_call->state) || (oldreg1 != aites_call_s->reg1State) || (oldreg2 != aites_call_s->reg2State))
