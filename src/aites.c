@@ -824,12 +824,14 @@ void gpioCheckThread(deviceInfo *deviceConfig)
 
         //printf("DEBUG: BEFORE UA_CALL\n");
         if (aites_call_s->uac == NULL) {
-            printf("DEBUG: UAC is null\n");
-            curr_call = aites_call_s->callState;
-            if (!curr_call)
+            printf("DEBUG: UAC is null\n");  // TODO: check UA for null before 
+            break;
+            //curr_call = aites_call_s->callState;
+            if (curr_call == NULL)
             {
                 printf("Curr_call is NULL\n");
-                curr_call->state = 0;
+                //curr_call->state = 0;
+                break;
             }
         } else {
             curr_call->state = aites_call_s->callState;
@@ -889,10 +891,10 @@ void gpioCheckThread(deviceInfo *deviceConfig)
             if (sound == 0)
             {
                 sound = 1;
-                int volume = 205 + (deviceConfig->spkVolume *5);
-                memset(cmdStr, 0x00, MAX_STRING);
-                sprintf(cmdStr, "amixer set \'Playback\' %d", volume);
-                system(cmdStr);
+                //int volume = 205 + (deviceConfig->spkVolume *5);
+                //memset(cmdStr, 0x00, MAX_STRING);
+                //sprintf(cmdStr, "amixer set \'Playback\' %d", volume);
+                //system(cmdStr);
             }
         }
         else
