@@ -823,10 +823,11 @@ void gpioCheckThread(deviceInfo *deviceConfig)
             break;
 
         //printf("DEBUG: BEFORE UA_CALL\n");
+
         if (aites_call_s->uac == NULL) {
             printf("DEBUG: UAC is null\n");  // TODO: check UA for null before 
+            curr_call->state = aites_call_s->callState;
             break;
-            //curr_call = aites_call_s->callState;
             if (curr_call == NULL)
             {
                 printf("Curr_call is NULL\n");
@@ -836,7 +837,7 @@ void gpioCheckThread(deviceInfo *deviceConfig)
         } else {
             curr_call->state = aites_call_s->callState;
         }
-        //printf("DEBUG: After UA_CALL\n");
+        printf("DEBUG: After UA_CALL\n");
         
         
         if( (oldcall != curr_call->state) || (oldreg1 != aites_call_s->reg1State) || (oldreg2 != aites_call_s->reg2State))
