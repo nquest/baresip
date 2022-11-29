@@ -1728,7 +1728,7 @@ void getEth0Config(void)
     // Get mac address
     memset(cmdOutput, 0x00, MAX_STRING);
     printf("----------1---------\n");
-    fp = popen("cat /sys/class/net/eth0/address","r");
+    fp = popen("cat /sys/class/net/br-lan/address","r");
 //    fp = popen("cat /sys/class/net/eno1/address","r");
     printf("----------2---------\n");
     fgets(cmdOutput,MAX_STRING,fp);
@@ -1745,7 +1745,7 @@ void getEth0Config(void)
     // Get IP address
     memset(cmdOutput, 0x00, MAX_STRING);
     printf("----------5---------\n");
-    fp = popen("ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'","r");
+    fp = popen("ifconfig br-lan | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'","r");
 //    fp = popen("/sbin/ifconfig eno1 | grep 'inet ' | cut -d: -f1 | awk '{ print $2}'","r");
     printf("----------6---------\n");
     fgets(cmdOutput,MAX_STRING,fp);
@@ -1763,7 +1763,7 @@ void getEth0Config(void)
     printf("----------9---------\n");
     memset(cmdOutput, 0x00, MAX_STRING);
     printf("----------10---------\n");
-    fp = popen("route -n | grep eth0  | grep 'UG[ \t]' | awk '{print $2}'","r");
+    fp = popen("route -n | grep br-lan  | grep 'UG[ \t]' | awk '{print $2}'","r");
 //    fp = popen("route -n | grep eno1  | grep 'UG[ \t]' | awk '{print $2}'","r");
     printf("----------11---------\n");
     fgets(cmdOutput,MAX_STRING,fp);
@@ -1779,7 +1779,7 @@ void getEth0Config(void)
     // Get subnet mask of eth0
     memset(cmdOutput, 0x00, MAX_STRING);
     printf("----------13---------\n");
-    fp = popen("ifconfig eth0 | grep 'Mask:' | cut -d: -f4 | awk '{ print $1}'","r");
+    fp = popen("ifconfig br-lan | grep 'Mask:' | cut -d: -f4 | awk '{ print $1}'","r");
 //    fp = popen("/sbin/ifconfig eno1 | grep 'inet ' | cut -d: -f1 | awk '{ print $4}'","r");
     printf("----------14---------\n");
     fgets(cmdOutput,MAX_STRING,fp);
