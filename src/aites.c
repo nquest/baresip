@@ -728,20 +728,21 @@ int audioPlayThread(deviceInfo* deviceConfig)
 
     if(deviceConfig->sipCallStatus == 0)
     {
-        if(deviceConfig->ethConnectionFlag == 0)
-        {
-            for(cnt = 0; cnt < deviceConfig->audPlayCnt; cnt++)
-            {
-                sprintf(aplayCmd, "aplay %s", CONNECTION_ERR_FILE);
-                printf("aplaycmd = %s", aplayCmd);
-                retVal = system(aplayCmd);
-                if(retVal == 0)
-                    printf("eth Error play Success\n");
-                else
-                    printf("eth Error play Failed\n");
-            }
-        }
-        else if(deviceConfig->isServerAvailable == false)
+        // if(deviceConfig->ethConnectionFlag == 0)
+        // {
+        //     for(cnt = 0; cnt < deviceConfig->audPlayCnt; cnt++)
+        //     {
+        //         sprintf(aplayCmd, "aplay %s", CONNECTION_ERR_FILE);
+        //         printf("aplaycmd = %s", aplayCmd);
+        //         retVal = system(aplayCmd);
+        //         if(retVal == 0)
+        //             printf("eth Error play Success\n");
+        //         else
+        //             printf("eth Error play Failed\n");
+        //     }
+        // }
+        // else 
+        if(deviceConfig->isServerAvailable == false)
         {
             for(cnt = 0; cnt < deviceConfig->audPlayCnt; cnt++)
             {
@@ -805,14 +806,6 @@ void gpioCheckThread(deviceInfo *deviceConfig)
     int sound = 0;
     char cmdStr[MAX_STRING];
     struct call *curr_call = malloc(sizeof(struct call));
-    
-    
-    // while(1) {
-    //     printf("gpioCheckThread enter");
-    //     sleep(30);
-    // };
-    //     return;
-    
     
     while(1)
     {
@@ -1266,7 +1259,7 @@ void networkCheckThread(deviceInfo* deviceConfig)
         fgets(cmdOutput,MAX_STRING,fp);
         y = atoi(cmdOutput);
         pclose(fp);
-        if((x == 1) || (y == 1))
+        if((x == 1) && (y == 1))
             gblDeviceConfig.ethConnectionFlag =  1;
         else
             gblDeviceConfig.ethConnectionFlag =  0;
