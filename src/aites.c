@@ -674,33 +674,32 @@ void timerThread(deviceInfo * deviceConfig)
             break;
 
         printf("Get All GPIO data\n");
-        sleep(30);
-        // if(readAllGPIOValue(&gblDeviceData) == RETURN_ERROR)
-        // {
-        //     printf ("Error while reading GPIO values \n");
-        // }
-        // else
-        // {
-        //     printf("Get TTL  data\n");
-        //     memset(gblDeviceData.ttlData, 0x00, MAX_STRING);
-        //     gblDeviceData.ttlDataSize = 0;
-        //     if(readTTLData(gblDeviceData.ttlData, &gblDeviceData.ttlDataSize) == RETURN_ERROR)
-        //     {
-        //         printf ("Error while reading TTL data values \n");
-        //         memcpy(gblDeviceData.ttlData, "psu:-1", strlen("psu:-1"));
-        //         gblDeviceData.ttlDataSize = strlen("psu:-1");
-        //     }
-        //     else
-        //     {
-        //         printf ("Read data = %s \n", gblDeviceData.ttlData);
-        //         printf ("Read data size = %d \n", gblDeviceData.ttlDataSize);
-        //     }
+        if(readAllGPIOValue(&gblDeviceData) == RETURN_ERROR)
+        {
+            printf ("Error while reading GPIO values \n");
+        }
+        else
+        {
+            printf("Get TTL  data\n");
+            memset(gblDeviceData.ttlData, 0x00, MAX_STRING);
+            gblDeviceData.ttlDataSize = 0;
+            if(readTTLData(gblDeviceData.ttlData, &gblDeviceData.ttlDataSize) == RETURN_ERROR)
+            {
+                printf ("Error while reading TTL data values \n");
+                memcpy(gblDeviceData.ttlData, "psu:-1", strlen("psu:-1"));
+                gblDeviceData.ttlDataSize = strlen("psu:-1");
+            }
+            else
+            {
+                printf ("Read data = %s \n", gblDeviceData.ttlData);
+                printf ("Read data size = %d \n", gblDeviceData.ttlDataSize);
+            }
 
-        //     if(makeDataStrAndSend(&gblDeviceData, &gblDeviceConfig) == RETURN_ERROR)
-        //     {
-        //         printf("Error in sending log data to server \n");
-        //     }
-        // }
+            if(makeDataStrAndSend(&gblDeviceData, &gblDeviceConfig) == RETURN_ERROR)
+            {
+                printf("Error in sending log data to server \n");
+            }
+        }
     }
 }
 
