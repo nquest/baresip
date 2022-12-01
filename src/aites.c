@@ -741,8 +741,9 @@ int audioPlayThread(deviceInfo* deviceConfig)
         //             printf("eth Error play Failed\n");
         //     }
         // }
-        // else 
-        if(deviceConfig->isServerAvailable == false)
+        // else
+        if(aites_call_s->reg1State == 0 && aites_call_s->reg2State == 0)
+        //if(deviceConfig->isServerAvailable == false)
         {
             for(cnt = 0; cnt < deviceConfig->audPlayCnt; cnt++)
             {
