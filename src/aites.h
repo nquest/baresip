@@ -60,8 +60,12 @@
 
 #define BARESIP_ACCNTS_FILE		"/etc/baresip/accounts"
 //#define BARESIP_ACCNTS_FILE		    "testConfig.ini"   // Baresip app config file
+/* Original files erom ECB
 #define CONNECTION_ERR_FILE		    "/usr/bin/networkcableerr.wav"
 #define SERVER_UNAVAILABLE_FILE	    "/usr/bin/servererr.wav"
+*/
+#define CONNECTION_ERR_FILE		    "/usr/share/baresip/notfound.wav"
+#define SERVER_UNAVAILABLE_FILE	    "/usr/share/baresip/error.wav"
 //#define CONNECTION_ERR_FILE		    "networkcableerr.wav"
 //#define SERVER_UNAVAILABLE_FILE	    "servererr.wav"
 
