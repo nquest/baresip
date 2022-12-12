@@ -1260,7 +1260,8 @@ void networkCheckThread(deviceInfo* deviceConfig)
         fgets(cmdOutput,MAX_STRING,fp);
         y = atoi(cmdOutput);
         pclose(fp);
-        if((x == 1) && (y == 1))
+        //if((x == 1) && (y == 1))   Original code
+        if((x == 1) || (y == 1))   //Changed by Nishith 12-Dec-2022
             gblDeviceConfig.ethConnectionFlag =  1;
         else
             gblDeviceConfig.ethConnectionFlag =  0;
